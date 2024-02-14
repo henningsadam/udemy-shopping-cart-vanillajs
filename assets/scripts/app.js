@@ -20,9 +20,14 @@ class ElementAttribute {
 }
 
 class Component {
-  constructor(renderHookId) {
+  constructor(renderHookId, shouldRender = true) {
     this.hookId = renderHookId;
+    if (shouldRender) {
+      this.render();
+    }
   }
+
+  render() {}
 
   createRootElement(tag, cssClasses, attribtutes) {
     const rootElement = document.createElement(tag);
@@ -59,7 +64,12 @@ class ShoppingCart extends Component {
   }
 
   constructor(renderHookId) {
-    super(renderHookId);
+    super(renderHookId, false);
+    this.orderProducts = () => {
+      console.log('ordering...');
+      console.log(this.items);
+    };
+    this.render();
   }
 
   addProduct(product) {
@@ -74,28 +84,45 @@ class ShoppingCart extends Component {
       <h2>Total: \$${0}</h2>
       <button>Order now!</button>
     `;
+
+    const orderBtn = cartEl.querySelector('button');
+    // orderBtn.addEventListener('click', () => this.orderProducts())
+    orderBtn.addEventListener('click', this.orderProducts);
     this.totalOutput = cartEl.querySelector('h2');
   }
 }
 
 class ProductList extends Component {
-  products = [
-    new Product(
-      'A Pillow',
-      'https://picsum.photos/200',
-      'A soft pillow',
-      19.99
-    ),
-    new Product(
-      'A Carpet',
-      'https://picsum.photos/200?random=1',
-      'A carpet you might like, or not.',
-      89.99
-    ),
-  ];
+  #products = [];
 
   constructor(renderHookId) {
-    super(renderHookId);
+    super(renderHookId, false);
+    this.render();
+    this.fetchProducts();
+  }
+
+  fetchProducts() {
+    this.#products = [
+      new Product(
+        'A Pillow',
+        'https://picsum.photos/200',
+        'A soft pillow',
+        19.99
+      ),
+      new Product(
+        'A Carpet',
+        'https://picsum.photos/200?random=1',
+        'A carpet you might like, or not.',
+        89.99
+      ),
+    ];
+    this.renderProducts();
+  }
+
+  renderProducts() {
+    for (const prod of this.#products) {
+      new ProductListItem(prod, 'prod-list');
+    }
   }
 
   render() {
@@ -103,16 +130,17 @@ class ProductList extends Component {
       new ElementAttribute('id', 'prod-list'),
     ]);
 
-    for (const prod of this.products) {
-      const item = new ProductListItem(prod, 'prod-list').render();
+    if (this.#products && this.#products.length > 0) {
+      this.renderProducts();
     }
   }
 }
 
 class ProductListItem extends Component {
   constructor(product, renderHookId) {
-    super(renderHookId);
+    super(renderHookId, false);
     this.product = product;
+    this.render();
   }
 
   addtoCart() {
@@ -138,13 +166,14 @@ class ProductListItem extends Component {
   }
 }
 
-class Shop {
+class Shop extends Component {
+  constructor() {
+    super();
+  }
+
   render() {
     this.cart = new ShoppingCart('app');
-    this.cart.render();
-
-    const productList = new ProductList('app');
-    productList.render();
+    new ProductList('app');
   }
 }
 
@@ -153,7 +182,6 @@ class App {
 
   static init() {
     const shop = new Shop();
-    shop.render();
     this.cart = shop.cart;
   }
 
